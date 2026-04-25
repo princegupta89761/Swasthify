@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "HealthRecord": {
+      "title": "Health Record",
+      "description": "A single health data entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "value": { "type": "number" },
+        "unit": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["userId", "type", "value", "timestamp"]
+    },
+    "SymptomEntry": {
+      "title": "Symptom Entry",
+      "description": "A recorded symptom for the timeline",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "symptom": { "type": "string" },
+        "severity": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "prediction": { "type": "string" }
+      },
+      "required": ["userId", "symptom", "timestamp"]
+    },
+    "EmergencyContact": {
+      "title": "Emergency Contact",
+      "description": "Contact person for SOS alerts",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "relation": { "type": "string" }
+      },
+      "required": ["userId", "name", "phone"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/health_records/{recordId}": {
+      "schema": "HealthRecord",
+      "description": "User health records"
+    },
+    "/symptoms_timeline/{entryId}": {
+      "schema": "SymptomEntry",
+      "description": "User symptom history for risk prediction"
+    },
+    "/emergency_contacts/{contactId}": {
+      "schema": "EmergencyContact",
+      "description": "Emergency contacts per user"
+    }
+  }
+}

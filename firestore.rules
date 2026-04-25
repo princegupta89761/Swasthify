@@ -1,0 +1,106 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - uid: string (required)
+    //   - name: string
+    //   - email: string (required, email format)
+    //   - role: string (enum: user, admin)
+    //   - createdAt: timestamp
+    //
+    // Collection: health_records
+    // Fields:
+    //   - userId: string (required)
+    //   - type: string (required)
+    //   - value: number (required)
+    //   - unit: string
+    //   - timestamp: timestamp (required)
+    //
+    // Collection: symptoms_timeline
+    // Fields:
+    //   - userId: string (required)
+    //   - symptom: string (required)
+    //   - severity: number
+    //   - timestamp: timestamp (required)
+    //   - prediction: string
+    //
+    // Collection: emergency_contacts
+    // Fields:
+    //   - userId: string (required)
+    //   - name: string (required)
+    //   - phone: string (required)
+    //   - relation: string
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+
+    function isNewDocOwner() {
+      return isAuthenticated() && request.auth.uid == request.resource.data.userId;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid is string &&
+             data.email is string &&
+             (!('role' in data) || data.role in ['user', 'admin']);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+              request.auth.token.email == "vedantuj@gmail.com");
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && 
+                      (request.resource.data.role == resource.data.role || isAdmin());
+    }
+
+    match /health_records/{recordId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isNewDocOwner();
+      allow update: if isDocOwner() && isNewDocOwner();
+      allow delete: if isDocOwner();
+    }
+
+    match /symptoms_timeline/{entryId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isNewDocOwner();
+      allow update: if isDocOwner() && isNewDocOwner();
+      allow delete: if isDocOwner();
+    }
+
+    match /emergency_contacts/{contactId} {
+      allow read: if isDocOwner() || isAdmin();
+      allow create: if isNewDocOwner();
+      allow update: if isDocOwner() && isNewDocOwner();
+      allow delete: if isDocOwner();
+    }
+  }
+}

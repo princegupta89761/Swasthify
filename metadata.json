@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Swasthify",
+  "description": "Your Health, Our Priority. A modern healthcare platform focusing on early disease detection, AI guidance, emergency response, and digital health management.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
